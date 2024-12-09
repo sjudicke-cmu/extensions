@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
+from email.utils import make_msgid
 from smtplib import SMTP_SSL, SMTPException
 from typing import List
 
@@ -147,12 +148,16 @@ class Email:
 
         # This message is sent from Python."""
 
-        BODY_TEXT = ("BCOP TEST TEST")
 
         msg = MIMEMultipart('alternative')
         msg['Subject'] = SUBJECT
-        msg['From'] = formataddr((SENDERNAME, sender_email))
+        #msg['From'] = formataddr((SENDERNAME, sender_email))
+        msg['From'] = SENDERNAME
         msg['To'] = receiver_email
+        email_id = make_msgid()
+        msg['Message-Id'] = email_id
+        msg['References'] = email_id
+        msg['In-Reply-To'] = email_id
         msg.add_header('reply-to', reply_to_email)
         if len(cc_emails) > 0:
             msg['CC'] = ",".join(cc_emails)
