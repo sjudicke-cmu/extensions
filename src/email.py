@@ -156,8 +156,6 @@ class Email:
         msg['In-Reply-To'] = email_id
         msg['Reply-To'] = reply_to_email
 
-
-        #msg.add_header('reply-to', reply_to_email)
         if len(cc_emails) > 0:
             msg['CC'] = ",".join(cc_emails)
         # Comment or delete the next line if you are not using a configuration set
