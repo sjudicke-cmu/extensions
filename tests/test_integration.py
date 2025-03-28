@@ -17,27 +17,36 @@ from src.utils import Environment
 
 from tests.MockSheet import MockSheet
 
-DEV_URL = "https://docs.google.com/spreadsheets/d/1BabID1n6fPgeuuO4-1r3mkoQ9Nx5dquNwdsET75In1E/edit#gid=1214799044"
+# TODO: Paste Spreadsheet URL
+DEV_URL = "SPREADSHEET URL HERE"
 
 
 class TestIntegration:
     @classmethod
     def setup_class(cls):
-        ss = gspread.service_account("service-account.json").open_by_url(DEV_URL)
+
+        credentials_path = '../service-account.json'
+        ss = gspread.service_account(credentials_path).open_by_url(DEV_URL)
         roster = ss.worksheet("Roster")
         headers = roster.get_all_values()[0]
         roster.clear()
         roster.update_cells([gspread.Cell(row=1, col=i + 1, value=header) for i, header in enumerate(headers)])
 
-        base = BaseSpreadsheet(spreadsheet_url=DEV_URL)
-        cls.sheet_assignments = MockSheet.from_live(base.get_sheet(SHEET_ASSIGNMENTS).sheet)
-        cls.sheet_form_questions = MockSheet.from_live(base.get_sheet(SHEET_FORM_QUESTIONS).sheet)
-        cls.sheet_env_vars = MockSheet.from_live(base.get_sheet(SHEET_ENVIRONMENT_VARIABLES).sheet)
-        cls.sheet_records = MockSheet.from_live(base.get_sheet(SHEET_STUDENT_RECORDS).sheet)
+        base = BaseSpreadsheet(spreadsheet_url=DEV_URL, credentials_path=credentials_path)
+        cls.sheet_assignments = base.get_sheet(SHEET_ASSIGNMENTS)
+        cls.sheet_form_questions = base.get_sheet(SHEET_FORM_QUESTIONS)
+        cls.sheet_env_vars = base.get_sheet(SHEET_ENVIRONMENT_VARIABLES)
+        cls.sheet_records = base.get_sheet(SHEET_STUDENT_RECORDS)
+
+        Environment.configure_env_vars(cls.sheet_env_vars)
+        cls.auto_approve_threshold = Environment.get_auto_approve_threshold()
+        cls.auto_approve_threshold_dsp = Environment.get_auto_approve_threshold_dsp()
+        cls.auto_approve_assignment_threshold = Environment.get_auto_approve_assignment_threshold()
+        cls.max_total_requested_extensions_threshold =Environment.get_max_total_requested_extensions_threshold()
 
     @classmethod
     def teardown_class(cls):
-        cls.sheet_records.flush()
+        pass
 
     def get_request(
         self,
@@ -46,6 +55,7 @@ class TestIntegration:
         assignments: str,
         is_dsp: str = "No",
         reason: str = "Test reason.",
+        documentation: str = "Test documentation.",
         has_partner: str = "No",
         partner_email: str = "",
     ):
@@ -57,6 +67,7 @@ class TestIntegration:
             "assignments": assignments,
             "days": days,
             "reason": reason,
+            "documentation": documentation,
             "has_partner": has_partner,
             "partner_email": partner_email,
             "partner_sid": "123456",
@@ -257,20 +268,25 @@ class TestIntegration:
     # [C] MANUAL APPROVALS: Request # days > allowed # days.
     #########################################################################################################
     def test_flag_request_too_many_days(self):
+        auto_approve_threshold_exceeded = self.auto_approve_threshold + 1
         policy = self.get_policy(
             mock_request=self.get_request(
-                email="C1@berkeley.edu", assignments="Homework 1", days="10", reason="test_flag_request_too_many_days"
+                email="C1@berkeley.edu",
+                assignments="Homework 1",
+                days=str(auto_approve_threshold_exceeded),
+                reason="test_flag_request_too_many_days"
             ),
             timestamp="2022-01-27T20:46:42.125Z",
         )
         assert not policy.apply(silent=True)
 
     def test_flag_request_too_many_days_with_partner(self):
+        auto_approve_threshold_exceeded = self.auto_approve_threshold + 1
         policy = self.get_policy(
             mock_request=self.get_request(
                 email="C1@berkeley.edu",
                 assignments="Project 1 Checkpoint",
-                days="10",
+                days=str(auto_approve_threshold_exceeded),
                 has_partner="Yes",
                 partner_email="C1.5@berkeley.edu",
                 reason="test_flag_request_too_many_days_with_partner",
@@ -280,11 +296,12 @@ class TestIntegration:
         assert not policy.apply(silent=True)
 
     def test_flag_request_too_many_days_dsp(self):
+        auto_approve_threshold_dsp_exceeded = self.auto_approve_threshold_dsp + 1
         policy = self.get_policy(
             mock_request=self.get_request(
                 email="C2@berkeley.edu",
                 assignments="Homework 1",
-                days="10",
+                days=str(auto_approve_threshold_dsp_exceeded),
                 is_dsp="Yes",
                 reason="test_flag_request_too_many_days_dsp",
             ),
@@ -293,36 +310,46 @@ class TestIntegration:
         assert not policy.apply(silent=True)
 
     def test_flag_request_too_many_days_multiple_assignments(self):
+        auto_approve_threshold_exceeded = self.auto_approve_threshold + 1
         policy = self.get_policy(
             mock_request=self.get_request(
                 email="C3@berkeley.edu",
                 assignments="Homework 1, Homework 2",
-                days="10, 2",
+                days=f"{auto_approve_threshold_exceeded}, {auto_approve_threshold_exceeded}",
                 reason="test_flag_request_too_many_days_multiple_assignments",
             ),
             timestamp="2022-01-27T20:46:42.125Z",
         )
         assert not policy.apply(silent=True)
 
-    def test_flag_too_many_submissions_in_one_request(self):
+    def test_flag_too_many_assignments_in_one_request(self):
+        auto_approve_assignment_threshold_exceeded = self.auto_approve_assignment_threshold + 1
+        assignment_list = [f'Homework {i + 1}' for i in range(auto_approve_assignment_threshold_exceeded)]
+        assignment_list_str = ", ".join(assignment_list)
+
         policy = self.get_policy(
             mock_request=self.get_request(
                 email="C4@berkeley.edu",
-                assignments="Homework 1, Homework 2, Homework 3, Homework 4, Homework 5, Homework 6",
-                days="10",
-                reason="test_flag_too_many_submissions_in_one_request",
+                assignments=assignment_list_str,
+                days="2",
+                reason="test_flag_too_many_assignments_in_one_request",
             ),
             timestamp="2022-01-27T20:46:42.125Z",
         )
         assert not policy.apply(silent=True)
 
-    def test_flag_too_many_total_submissions_non_dsp(self):
+    def test_flag_too_many_total_extensions_non_dsp(self):
         # Note: based on environment variables, the threshold for # of assignments allowed is 6.
-        for i in range(1, 7):
+
+        # BUG: this test case is failing because it simulates multiple form submissions 
+        # at different times using for-loop. This prevents Google Sheet from propagating
+        # data correctly thus one email has multiple rows in the Roster sheet
+
+        for i in range(self.max_total_requested_extensions_threshold):
             policy = self.get_policy(
                 mock_request=self.get_request(
                     email="C4.5@berkeley.edu",
-                    assignments=f"Homework {i}",
+                    assignments=f"Homework {i + 1}",
                     days="2",
                     reason="test_flag_too_many_submissions",
                 ),
@@ -330,11 +357,11 @@ class TestIntegration:
             )
             assert policy.apply(silent=True)
 
-        # The 7th request should trigger manual approval.
+        # The next request should trigger manual approval.
         policy = self.get_policy(
             mock_request=self.get_request(
                 email="C4.5@berkeley.edu",
-                assignments="Homework 7",
+                assignments=f"Homework {self.max_total_requested_extensions_threshold + 1}",
                 days="2",
                 reason="test_flag_too_many_submissions",
             ),
@@ -343,11 +370,13 @@ class TestIntegration:
         assert not policy.apply(silent=True)
 
     def test_flag_request_too_many_days_with_multiple_partners(self):
+        auto_approve_threshold_exceeded = self.auto_approve_threshold + 1
+
         policy = self.get_policy(
             mock_request=self.get_request(
                 email="C5@berkeley.edu",
                 assignments="Project 1 Checkpoint",
-                days="10",
+                days=str(auto_approve_threshold_exceeded),
                 has_partner="Yes",
                 partner_email="C5.5@berkeley.edu, C5.6@berkeley.edu, C5.7@berkeley.edu",
                 reason="test_flag_request_too_many_days_with_multiple_partners",

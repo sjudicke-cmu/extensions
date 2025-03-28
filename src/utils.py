@@ -100,6 +100,10 @@ class Environment:
         return int(Environment.get("AUTO_APPROVE_ASSIGNMENT_THRESHOLD"))
 
     @staticmethod
+    def get_course_name() -> str:
+        return str(Environment.safe_get("COURSE_NAME", ""))
+
+    @staticmethod
     def configure_env_vars(sheet: Sheet):
         """
         Reads environment variables from the "Environment Variables" sheet, and stores them into this process's

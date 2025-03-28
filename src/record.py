@@ -10,7 +10,9 @@ from src.assignments import AssignmentList
 from src.errors import StudentRecordError
 from src.gradescope import Gradescope
 from src.sheets import Sheet
-from src.utils import cast_bool
+from src.utils import Environment, cast_bool 
+
+import json
 
 APPROVAL_STATUS_REQUESTED_MEETING = "Requested Meeting"
 APPROVAL_STATUS_PENDING = "Pending"
@@ -137,6 +139,8 @@ class StudentRecord:
 
         if self.table_index == -1:
             values = [self.write_queue.get(header) for header in headers]
+            # minus 1 to account for header row
+            self.table_index = self.sheet.num_entries - 1 
             self.sheet.append_row(values=values, value_input_option="USER_ENTERED")
 
             # Update local table_record object for email.
@@ -155,30 +159,37 @@ class StudentRecord:
             self.sheet.update_cells(cells=cells)
 
     def apply_extensions(self, assignments: AssignmentList, gradescope: Gradescope) -> List[str]:
+
         warnings = []
         for assignment in assignments:
             num_days = self.get_request(assignment_id=assignment.get_id())
+            course_name = Environment.safe_get("COURSE_NAME", "")
+
             if num_days:
+
                 if len(assignment.get_gradescope_assignment_urls()) == 0:
                     print(
-                        f"[{assignment.get_name()}] could not extend assignment deadline for {self.get_email()} (assignment URL's not set)."
-                    )
+                        "[{}{}] could not extend assignment deadline for {} (assignment URL's not set).".format(
+                            course_name + " ", assignment.get_name(), self.get_email()))
                     continue
 
                 elif not assignment.get_due_date():
                     warnings.append(
-                        f"[{assignment.get_name()}] could not extend assignment deadline for {self.get_email()} (deadline not set)."
-                    )
+                        "[{} {}] could not extend assignment deadline for {} (deadline not set).".format(
+                            course_name + " ", assignment.get_name(), self.get_email()))
                     continue
 
                 else:
-                    print("Extending assignments: " + str(assignment.get_gradescope_assignment_urls()))
+                    print("Extending assignments: [{}{}] {}".format(
+                        course_name + " ", assignment.get_name(), str(assignment.get_gradescope_assignment_urls())))
                     warnings = gradescope.apply_extension(
+                        assignment_name=assignment.get_name(),
                         assignment_urls=assignment.get_gradescope_assignment_urls(),
                         email=self.get_email(),
                         num_days=num_days,
                     )
                     warnings.extend(warnings)
+
         return warnings
 
     @staticmethod

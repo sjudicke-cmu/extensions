@@ -134,31 +134,30 @@ class Email:
 
     def send(self) -> None:
         PORT = 465  # For starttls
-        HOST = "REDACTED"
-        username = "REDACTED"
-        sender_email = "REDACTED"
+
+        SMTP_HOST = os.environ['SMTP_HOST']
+        smtp_username = os.environ['SMTP_USERNAME']
+        smtp_password = os.environ['SMTP_PASSWORD']
+        sender_email = os.environ['SENDER_EMAIL']
+
         SENDERNAME = Environment.get(ENV_EMAIL_FROM)
         receiver_email = self.to_email
         cc_emails = self.cc_emails
         reply_to_email = self.reply_to_email
-        password = "REDACTED"
         SUBJECT = self.subject
-        # message = """\
-        # Subject: Hi there
-
-        # This message is sent from Python."""
-
-
+        
         msg = MIMEMultipart('alternative')
         msg['Subject'] = SUBJECT
-        #msg['From'] = formataddr((SENDERNAME, sender_email))
         msg['From'] = SENDERNAME
         msg['To'] = receiver_email
         email_id = make_msgid()
         msg['Message-Id'] = email_id
         msg['References'] = email_id
         msg['In-Reply-To'] = email_id
-        msg.add_header('reply-to', reply_to_email)
+        msg['Reply-To'] = reply_to_email
+
+
+        #msg.add_header('reply-to', reply_to_email)
         if len(cc_emails) > 0:
             msg['CC'] = ",".join(cc_emails)
         # Comment or delete the next line if you are not using a configuration set
@@ -172,8 +171,8 @@ class Email:
         # the HTML message, is best and preferred.
         msg.attach(part1)
 
-        with SMTP_SSL(HOST, PORT) as server:
-            server.login(username, password)
+        with SMTP_SSL(SMTP_HOST, PORT) as server:
+            server.login(smtp_username, smtp_password)
             server.sendmail(sender_email, [receiver_email]+cc_emails, msg.as_string())
             server.close()
             print("Email sent!")
