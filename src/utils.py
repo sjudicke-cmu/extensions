@@ -53,6 +53,18 @@ def cast_list_int(cell: str) -> List[int]:
 
 PREFIX = "cs161extensions_"
 
+DEFAULT_COURSE_NAME = "PLEASE SET A COURSE NAME"
+DEFAULT_REPLY_TO_EMAIL = "PLEASE SET REPLY-TO EMAIL"
+
+DEFAULT_AUTO_APPROVE_THRESHOLD = 1
+DEFAULT_AUTO_APPROVE_THRESHOLD_DSP = 1
+DEFAULT_APPROVE_ASSIGNMENT_THRESDHOLD = 1
+DEFAULT_MAX_TOTAL_REQUESTED_EXTENSIONS_THRESHOLD = 3
+
+DEFAULT_EMAIL_FROM = "[{}] <{}@berkeley.edu>".format(DEFAULT_COURSE_NAME, DEFAULT_COURSE_NAME)
+DEFAULT_EMAIL_SUBJECT = "[CS 000] Extension Request Update"
+
+DEFAULT_EXTEND_GRADESCOPE_ASSIGNMENTS = "No"
 
 class Environment:
     @staticmethod
@@ -82,26 +94,46 @@ class Environment:
 
     @staticmethod
     def get_auto_approve_threshold() -> int:
-        return int(Environment.get("AUTO_APPROVE_THRESHOLD"))
+        return int(Environment.safe_get(
+            "AUTO_APPROVE_THRESHOLD", DEFAULT_AUTO_APPROVE_THRESHOLD))
 
     @staticmethod
     def get_auto_approve_threshold_dsp() -> int:
-        return int(Environment.get("AUTO_APPROVE_THRESHOLD_DSP"))
+        return int(Environment.safe_get(
+            "AUTO_APPROVE_THRESHOLD_DSP", DEFAULT_AUTO_APPROVE_THRESHOLD_DSP))
 
     @staticmethod
     def get_max_total_requested_extensions_threshold() -> int:
         # If this number is -1, then assume this flag is disabled.
         # If this number is 0, then reject all extensions.
         # If this number is > 0, then reject extensions if the total number of extensions requested exceeds this number.
-        return int(Environment.safe_get("MAX_TOTAL_REQUESTED_EXTENSIONS_THRESHOLD", default=-1))
+        return int(Environment.safe_get(
+            "MAX_TOTAL_REQUESTED_EXTENSIONS_THRESHOLD", DEFAULT_MAX_TOTAL_REQUESTED_EXTENSIONS_THRESHOLD))
 
     @staticmethod
     def get_auto_approve_assignment_threshold() -> int:
-        return int(Environment.get("AUTO_APPROVE_ASSIGNMENT_THRESHOLD"))
+        return int(Environment.safe_get(
+            "AUTO_APPROVE_ASSIGNMENT_THRESHOLD", DEFAULT_APPROVE_ASSIGNMENT_THRESDHOLD))
 
     @staticmethod
     def get_course_name() -> str:
-        return str(Environment.safe_get("COURSE_NAME", ""))
+        return str(Environment.safe_get("COURSE_NAME", DEFAULT_COURSE_NAME))
+    
+    @staticmethod
+    def get_reply_to_email() -> str:
+        return str(Environment.safe_get("REPLY_TO_EMAIL", DEFAULT_REPLY_TO_EMAIL))
+    
+    @staticmethod
+    def get_email_from() -> str:
+        return str(Environment.safe_get("EMAIL_FROM", DEFAULT_EMAIL_FROM))
+    
+    @staticmethod
+    def get_email_subject() -> str:
+        return str(Environment.safe_get("EMAIL_SUBJECT", DEFAULT_EMAIL_SUBJECT))
+    
+    @staticmethod
+    def get_extend_gradescope_assignments() -> bool:
+        return cast_bool(Environment.safe_get("EXTEND_GRADESCOPE_ASSIGNMENTS", DEFAULT_EXTEND_GRADESCOPE_ASSIGNMENTS))
 
     @staticmethod
     def configure_env_vars(sheet: Sheet):

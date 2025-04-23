@@ -97,13 +97,14 @@ class Email:
 
         return cls(
             to_email=student.get_email(),
-            from_email=Environment.get(ENV_EMAIL_FROM),
+            from_email=Environment.get_email_from(),
             cc_emails=cc_emails,
-            reply_to_email=Environment.get(ENV_EMAIL_REPLY_TO),
-            subject=Environment.get(ENV_EMAIL_SUBJECT),
+            reply_to_email=Environment.get_reply_to_email(),
+            subject=Environment.get_email_subject(),
             body=body,
         )
 
+    """
     def OLDsend(self) -> None:
         # TODO: When 162 adds HTML support, bring back HTML emails.
         # html_body = Markdown().convert(self.body)
@@ -130,7 +131,7 @@ class Email:
 
         except Exception as e:
             raise EmailError("An error occurred while sending an email:", e)
-
+    """
 
     def send(self) -> None:
         PORT = 465  # For starttls
@@ -140,7 +141,7 @@ class Email:
         smtp_password = os.environ['SMTP_PASSWORD']
         sender_email = os.environ['SENDER_EMAIL']
 
-        SENDERNAME = Environment.get(ENV_EMAIL_FROM)
+        SENDERNAME = Environment.get_email_from()
         receiver_email = self.to_email
         cc_emails = self.cc_emails
         reply_to_email = self.reply_to_email

@@ -23,7 +23,7 @@ class Gradescope:
 
     @staticmethod
     def is_enabled():
-        return cast_bool(Environment.safe_get("EXTEND_GRADESCOPE_ASSIGNMENTS", "No"))
+        return Environment.get_extend_gradescope_assignments()
 
     def apply_extension(self, assignment_name: str, assignment_urls: List[str], email: str, num_days: int) -> List[str]:
         warnings = []
