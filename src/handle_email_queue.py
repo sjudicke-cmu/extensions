@@ -2,13 +2,12 @@ from typing import List
 
 from src.assignments import AssignmentList
 from src.email import Email
+from src.environment import Environment
 from src.errors import ConfigurationError
 from src.gradescope import Gradescope
 from src.record import EMAIL_STATUS_IN_QUEUE, StudentRecord
 from src.sheets import SHEET_ASSIGNMENTS, SHEET_ENVIRONMENT_VARIABLES, SHEET_STUDENT_RECORDS, BaseSpreadsheet
 from src.slack import SlackManager
-from src.utils import Environment
-
 
 def handle_email_queue(request_json):
     if "spreadsheet_url" not in request_json:

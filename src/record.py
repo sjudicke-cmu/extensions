@@ -7,10 +7,11 @@ from dateutil.parser import parse
 from pytz import timezone
 
 from src.assignments import AssignmentList
+from src.environment import Environment
 from src.errors import StudentRecordError
 from src.gradescope import Gradescope
 from src.sheets import Sheet
-from src.utils import Environment, cast_bool 
+from src.utils import cast_bool 
 
 import json
 

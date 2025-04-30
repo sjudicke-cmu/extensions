@@ -12,17 +12,10 @@ from typing import List
 from sicp.common.rpc.mail import send_email
 
 from src.assignments import AssignmentList
+from src.environment import Environment
 from src.errors import EmailError, KnownError
 from src.record import StudentRecord
-from src.utils import Environment, cast_list_str
-
-ENV_EMAIL_FROM = "EMAIL_FROM"
-ENV_EMAIL_REPLY_TO = "EMAIL_REPLY_TO"
-ENV_EMAIL_SUBJECT = "EMAIL_SUBJECT"
-ENV_EMAIL_SIGNATURE = "EMAIL_SIGNATURE"
-ENV_EMAIL_CC = "EMAIL_CC"
-ENV_APP_MASTER_SECRET = "APP_MASTER_SECRET"
-
+from src.utils import cast_list_str
 
 class Email:
     """
@@ -86,14 +79,14 @@ class Email:
         body += "\n\n"
         body += "Best,"
         body += "\n\n"
-        body += Environment.get(ENV_EMAIL_SIGNATURE)
+        body += Environment.get_email_signature()
         body += "\n\n"
         body += (
             "Disclaimer: This is an auto-generated email. We may follow up with you in"
             + " this thread, and feel free to reply to this thread if you'd like to follow up with us!"
         )
 
-        cc_emails = cast_list_str(Environment.safe_get(ENV_EMAIL_CC, ""))
+        cc_emails = cast_list_str(Environment.get_email_cc())
 
         return cls(
             to_email=student.get_email(),

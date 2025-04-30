@@ -4,10 +4,11 @@ from slack_sdk.webhook import WebhookClient, WebhookResponse
 from tabulate import tabulate
 
 from src.assignments import AssignmentList
+from src.environment import Environment
 from src.errors import SlackError
 from src.record import StudentRecord
 from src.submission import FormSubmission
-from src.utils import Environment, cast_list_str
+from src.utils import cast_list_str
 
 
 class SlackManager:
@@ -17,13 +18,20 @@ class SlackManager:
 
     def __init__(self) -> None:
         self.webhooks: List[WebhookClient] = []
-        self.webhooks.append(WebhookClient(Environment.get("SLACK_ENDPOINT")))
         self.warnings = []
         self.silent = False
 
-        if Environment.contains("SLACK_ENDPOINT_DEBUG"):
-            if Environment.get("SLACK_ENDPOINT_DEBUG") != Environment.get("SLACK_ENDPOINT"):
-                self.webhooks.append(WebhookClient(Environment.get("SLACK_ENDPOINT_DEBUG")))
+        webhook = Environment.get_slack_endpoint()
+        debug_webhook = Environment.get_slack_debug_endpoint()
+        
+        if webhook:
+            self.webhooks.append(WebhookClient(webhook))
+        if debug_webhook and debug_webhook != webhook:
+            self.webhooks.append(WebhookClient(debug_webhook))
+
+        # after Slack configuration if there is no webhook provided then suppress any Slack action
+        if not self.webhooks:
+            self.silent = True
 
     def suppress(self):
         self.silent = True
@@ -77,7 +85,7 @@ class SlackManager:
 
     @staticmethod
     def get_tags() -> str:
-        slack_tags = Environment.safe_get("SLACK_TAG_LIST")
+        slack_tags = Environment.get_slack_tag_list()
         prefix = ""
         if slack_tags:
             uids = cast_list_str(slack_tags)
@@ -130,7 +138,7 @@ class SlackManager:
                                 {
                                     "type": "button",
                                     "text": {"type": "plain_text", "text": "View Spreadsheet"},
-                                    "url": Environment.get("SPREADSHEET_URL"),
+                                    "url": Environment.get_spreadsheet_url(),
                                 },
                             ],
                         },

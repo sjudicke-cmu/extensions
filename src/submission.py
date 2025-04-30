@@ -1,9 +1,10 @@
 from typing import Any, Dict, List, Tuple
 
 from src.assignments import Assignment, AssignmentList
+from src.environment import Environment
 from src.errors import ConfigurationError, FormInputError
 from src.sheets import Sheet
-from src.utils import cast_list_int, cast_list_str, Environment
+from src.utils import cast_list_int, cast_list_str
 
 
 class FormSubmission:
