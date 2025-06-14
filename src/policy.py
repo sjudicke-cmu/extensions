@@ -2,13 +2,12 @@ from typing import Any, Dict, List, Optional
 
 from src.assignments import AssignmentList
 from src.email import Email
+from src.environment import Environment
 from src.gradescope import Gradescope
 from src.record import StudentRecord
 from src.sheets import Sheet
 from src.slack import SlackManager
 from src.submission import FormSubmission
-from src.utils import Environment
-
 
 class Policy:
     def __init__(

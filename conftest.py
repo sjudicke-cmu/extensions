@@ -2,7 +2,7 @@ import os
 
 from dotenv import dotenv_values
 
-from src.utils import PREFIX
+from src.environment import PREFIX
 
 # for testing Gradescope package currently under development
 # in production, we will use the gradescope_api from https://cs161-staff/gradescope-api

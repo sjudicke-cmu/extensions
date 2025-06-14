@@ -22,6 +22,7 @@ class Sheet:
         self.all_values = self.sheet.get_all_values()
         self.all_records = self.sheet.get_all_records()
         self.headers = self.all_values[0]
+        self.num_entries = len(self.all_values)
 
     def get_headers(self) -> List[str]:
         return self.headers
@@ -65,12 +66,12 @@ class BaseSpreadsheet:
     A pointer to the master spreadsheet.
     """
 
-    def __init__(self, spreadsheet_url: str) -> None:
-        if not os.path.exists("service-account.json"):
-            raise SheetError("Could not find Google Service Account at service-account.json.")
+    def __init__(self, spreadsheet_url: str, credentials_path: str = "/var/secrets/service-account-json") -> None:
+        if not os.path.exists(credentials_path):
+            raise SheetError("Could not find Google Service Account at service-account-json.")
 
         self.spreadsheet_url = spreadsheet_url
-        self.spreadsheet = gspread.service_account("service-account.json").open_by_url(spreadsheet_url)
+        self.spreadsheet = gspread.service_account(credentials_path).open_by_url(spreadsheet_url)
 
     def get_sheet(self, sheet_name: str) -> Sheet:
         return Sheet(sheet=self.spreadsheet.worksheet(sheet_name))

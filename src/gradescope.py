@@ -2,8 +2,9 @@ from typing import List
 
 from gradescope_api.client import GradescopeClient
 
+from src.environment import Environment
 from src.errors import GradescopeError
-from src.utils import Environment, cast_bool, truncate
+from src.utils import cast_bool, truncate
 
 
 class Gradescope:
@@ -23,12 +24,15 @@ class Gradescope:
 
     @staticmethod
     def is_enabled():
-        return cast_bool(Environment.safe_get("EXTEND_GRADESCOPE_ASSIGNMENTS", "No"))
+        return cast_bool(Environment.get_extend_gradescope_assignments())
 
-    def apply_extension(self, assignment_urls: List[str], email: str, num_days: int) -> List[str]:
+    def apply_extension(self, assignment_name: str, assignment_urls: List[str], email: str, num_days: int) -> List[str]:
         warnings = []
+        course_name = Environment.safe_get('COURSE_NAME', '')
+
         for assignment_url in assignment_urls:
-            prefix = f"[{email}] [{assignment_url}] [{num_days}] "
+            prefix = '[{}] [{}{}] [{}] [{}] '.format(
+                email, course_name + ' ', assignment_name, assignment_url, num_days)
             print("Extending: " + prefix)
             try:
                 course = self.client.get_course(course_url=assignment_url)

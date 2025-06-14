@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple
 
 from src.assignments import Assignment, AssignmentList
+from src.environment import Environment
 from src.errors import ConfigurationError, FormInputError
 from src.sheets import Sheet
 from src.utils import cast_list_int, cast_list_str
@@ -32,6 +33,7 @@ class FormSubmission:
                 self.responses[key] = str(form_payload[question][0])
 
         self.responses["Timestamp"] = form_payload["Timestamp"][0]
+        self.responses["Course Name"] = Environment.get_course_name()
         print(self.responses)
 
     def get_timestamp(self) -> str:
@@ -102,6 +104,9 @@ class FormSubmission:
     def get_reason(self) -> str:
         assert self.knows_assignments()
         return self.responses["reason"]
+
+    def get_documentation(self) -> str:
+        return self.responses["documentation"]
 
     def has_partner(self) -> bool:
         # Encoding default behavior: if the form doesn't contain a has_partner field, then we assume

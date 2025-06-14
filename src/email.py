@@ -12,17 +12,10 @@ from typing import List
 from sicp.common.rpc.mail import send_email
 
 from src.assignments import AssignmentList
+from src.environment import Environment
 from src.errors import EmailError, KnownError
 from src.record import StudentRecord
-from src.utils import Environment, cast_list_str
-
-ENV_EMAIL_FROM = "EMAIL_FROM"
-ENV_EMAIL_REPLY_TO = "EMAIL_REPLY_TO"
-ENV_EMAIL_SUBJECT = "EMAIL_SUBJECT"
-ENV_EMAIL_SIGNATURE = "EMAIL_SIGNATURE"
-ENV_EMAIL_CC = "EMAIL_CC"
-ENV_APP_MASTER_SECRET = "APP_MASTER_SECRET"
-
+from src.utils import cast_list_str
 
 class Email:
     """
@@ -86,24 +79,25 @@ class Email:
         body += "\n\n"
         body += "Best,"
         body += "\n\n"
-        body += Environment.get(ENV_EMAIL_SIGNATURE)
+        body += Environment.get_email_signature()
         body += "\n\n"
         body += (
             "Disclaimer: This is an auto-generated email. We may follow up with you in"
             + " this thread, and feel free to reply to this thread if you'd like to follow up with us!"
         )
 
-        cc_emails = cast_list_str(Environment.safe_get(ENV_EMAIL_CC, ""))
+        cc_emails = cast_list_str(Environment.get_email_cc())
 
         return cls(
             to_email=student.get_email(),
-            from_email=Environment.get(ENV_EMAIL_FROM),
+            from_email=Environment.get_email_from(),
             cc_emails=cc_emails,
-            reply_to_email=Environment.get(ENV_EMAIL_REPLY_TO),
-            subject=Environment.get(ENV_EMAIL_SUBJECT),
+            reply_to_email=Environment.get_reply_to_email(),
+            subject=Environment.get_email_subject(),
             body=body,
         )
 
+    """
     def OLDsend(self) -> None:
         # TODO: When 162 adds HTML support, bring back HTML emails.
         # html_body = Markdown().convert(self.body)
@@ -130,35 +124,32 @@ class Email:
 
         except Exception as e:
             raise EmailError("An error occurred while sending an email:", e)
-
+    """
 
     def send(self) -> None:
         PORT = 465  # For starttls
-        HOST = "REDACTED"
-        username = "REDACTED"
-        sender_email = "REDACTED"
-        SENDERNAME = Environment.get(ENV_EMAIL_FROM)
+
+        SMTP_HOST = os.environ['SMTP_HOST']
+        smtp_username = os.environ['SMTP_USERNAME']
+        smtp_password = os.environ['SMTP_PASSWORD']
+        sender_email = os.environ['SENDER_EMAIL']
+
+        SENDERNAME = Environment.get_email_from()
         receiver_email = self.to_email
         cc_emails = self.cc_emails
         reply_to_email = self.reply_to_email
-        password = "REDACTED"
         SUBJECT = self.subject
-        # message = """\
-        # Subject: Hi there
-
-        # This message is sent from Python."""
-
-
+        
         msg = MIMEMultipart('alternative')
         msg['Subject'] = SUBJECT
-        #msg['From'] = formataddr((SENDERNAME, sender_email))
         msg['From'] = SENDERNAME
         msg['To'] = receiver_email
         email_id = make_msgid()
         msg['Message-Id'] = email_id
         msg['References'] = email_id
         msg['In-Reply-To'] = email_id
-        msg.add_header('reply-to', reply_to_email)
+        msg['Reply-To'] = reply_to_email
+
         if len(cc_emails) > 0:
             msg['CC'] = ",".join(cc_emails)
         # Comment or delete the next line if you are not using a configuration set
@@ -172,8 +163,8 @@ class Email:
         # the HTML message, is best and preferred.
         msg.attach(part1)
 
-        with SMTP_SSL(HOST, PORT) as server:
-            server.login(username, password)
+        with SMTP_SSL(SMTP_HOST, PORT) as server:
+            server.login(smtp_username, smtp_password)
             server.sendmail(sender_email, [receiver_email]+cc_emails, msg.as_string())
             server.close()
             print("Email sent!")
