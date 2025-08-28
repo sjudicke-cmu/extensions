@@ -2,11 +2,13 @@ import json
 
 import src.handle_email_queue as handle_email
 import src.handle_flush_gradescope as handle_flush
+import src.handle_flush_pensieve as handle_flush_pensieve_module
 import src.handle_form_submit as handle_form
+from src.environment import Environment
 from src.errors import KnownError
 from src.slack import SlackManager
 from src.utils import truncate
-from src.environment import Environment
+
 
 def handle_email_queue(request):
     request_json = request.get_json()
@@ -20,7 +22,9 @@ def handle_email_queue(request):
         return {"success": False, "error": str(e)}
     except Exception as e:
         print("Internal Error Occurred: " + str(e) + f" (Request: {request_json})")
-        SlackManager().send_error("Internal error: " + str(e) + f" (Request: {truncate(request_json)})")
+        SlackManager().send_error(
+            "Internal error: " + str(e) + f" (Request: {truncate(request_json)})"
+        )
         raise
     finally:
         Environment.clear()
@@ -38,7 +42,29 @@ def handle_flush_gradescope(request):
         return {"success": False, "error": str(e)}
     except Exception as e:
         print("Internal Error Occurred: " + str(e) + f" (Request: {request_json})")
-        SlackManager().send_error("Internal error: " + str(e) + f" (Request: {truncate(request_json)})")
+        SlackManager().send_error(
+            "Internal error: " + str(e) + f" (Request: {truncate(request_json)})"
+        )
+        raise
+    finally:
+        Environment.clear()
+
+
+def handle_flush_pensieve(request):
+    request_json = request.get_json()
+    print("handle_flush_pensieve called on payload: " + json.dumps(request_json))
+    try:
+        handle_flush_pensieve_module.handle_flush_pensieve(request_json=request_json)
+        return {"success": True}
+    except KnownError as e:
+        print("Known Error Occurred: " + str(e) + f" (Request: {request_json})")
+        SlackManager().send_error(str(e) + f" (Request: {truncate(request_json)})")
+        return {"success": False, "error": str(e)}
+    except Exception as e:
+        print("Internal Error Occurred: " + str(e) + f" (Request: {request_json})")
+        SlackManager().send_error(
+            "Internal error: " + str(e) + f" (Request: {truncate(request_json)})"
+        )
         raise
     finally:
         Environment.clear()
@@ -56,7 +82,9 @@ def handle_form_submit(request):
         return {"success": False, "error": str(e)}
     except Exception as e:
         print("Internal Error Occurred: " + str(e) + f" (Request: {request_json})")
-        SlackManager().send_error("Internal error: " + str(e) + f" (Request: {truncate(request_json)})")
+        SlackManager().send_error(
+            "Internal error: " + str(e) + f" (Request: {truncate(request_json)})"
+        )
         raise
     finally:
         Environment.clear()
