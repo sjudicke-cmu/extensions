@@ -9,3 +9,5 @@ extensions/
 .DS_Store
 .vscode
 .env*
+.vscode/settings.json
+requirements.in
