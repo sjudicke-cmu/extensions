@@ -94,9 +94,9 @@ googleapis-common-protos==1.70.0
     # via
     #   -r requirements.in
     #   google-api-core
-git+https://github.com/cs161-staff/gradescope-api/
 gspread==6.2.1
     # via -r requirements.in
+git+https://github.com/cs161-staff/gradescope-api/
 httplib2==0.30.0
     # via
     #   -r requirements.in
