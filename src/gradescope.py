@@ -14,8 +14,8 @@ class Gradescope:
     """
 
     def __init__(self) -> None:
-        email = Environment.safe_get("GRADESCOPE_EMAIL")
-        password = Environment.safe_get("GRADESCOPE_PASSWORD")
+        email = Environment.get_gradescope_email()
+        password = Environment.get_gradescope_password()
 
         try:
             self.client = GradescopeClient(email=email, password=password)
@@ -28,7 +28,7 @@ class Gradescope:
 
     def apply_extension(self, assignment_name: str, assignment_urls: List[str], email: str, num_days: int) -> List[str]:
         warnings = []
-        course_name = Environment.safe_get('COURSE_NAME', '')
+        course_name = Environment.get_course_name()
 
         for assignment_url in assignment_urls:
             prefix = '[{}] [{}{}] [{}] [{}] '.format(
