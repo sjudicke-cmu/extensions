@@ -8,8 +8,7 @@ from src.sheets import (
     BaseSpreadsheet,
 )
 from src.slack import SlackManager
-from src.utils import Environment
-
+from src.environment import Environment
 
 def handle_form_submit(request_json):
     if "spreadsheet_url" not in request_json or "form_data" not in request_json:
