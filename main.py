@@ -5,8 +5,8 @@ import src.handle_flush_gradescope as handle_flush
 import src.handle_form_submit as handle_form
 from src.errors import KnownError
 from src.slack import SlackManager
-from src.utils import Environment, truncate
-
+from src.utils import truncate
+from src.environment import Environment
 
 def handle_email_queue(request):
     request_json = request.get_json()
