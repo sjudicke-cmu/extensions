@@ -13,7 +13,7 @@ from src.sheets import (
     BaseSpreadsheet,
 )
 from src.slack import SlackManager
-from src.utils import Environment
+from src.environment import Environment
 
 from tests.MockSheet import MockSheet
 
