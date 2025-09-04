@@ -4,10 +4,12 @@ from src.assignments import AssignmentList
 from src.email import Email
 from src.environment import Environment
 from src.gradescope import Gradescope
+from src.pensieve import Pensieve
 from src.record import StudentRecord
 from src.sheets import Sheet
 from src.slack import SlackManager
 from src.submission import FormSubmission
+
 
 class Policy:
     def __init__(
@@ -287,5 +289,11 @@ class Policy:
         if Gradescope.is_enabled():
             client = Gradescope()
             warnings = target.apply_extensions(assignments=self.assignments, gradescope=client)
+            for warning in warnings:
+                self.slack.add_warning(warning)
+
+        if Pensieve.is_enabled():
+            pensieve_client = Pensieve()
+            warnings = target.apply_extensions_pensieve(assignments=self.assignments, pensieve=pensieve_client)
             for warning in warnings:
                 self.slack.add_warning(warning)
