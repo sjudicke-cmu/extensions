@@ -14,8 +14,8 @@ class Gradescope:
     """
 
     def __init__(self) -> None:
-        email = Environment.get("GRADESCOPE_EMAIL")
-        password = Environment.get("GRADESCOPE_PASSWORD")
+        email = Environment.safe_get("GRADESCOPE_EMAIL")
+        password = Environment.safe_get("GRADESCOPE_PASSWORD")
 
         try:
             self.client = GradescopeClient(email=email, password=password)
