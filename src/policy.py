@@ -92,7 +92,7 @@ class Policy:
                 for partner in self.partners:
                     self.send_email(target=partner)
 
-        # TODO: Step 7: If enabled, extend deadlines on Gradescope.
+        # Step 7: If enabled, extend deadlines on Gradescope.
         if not silent:
             self.extend_assignments(target=self.student)
             if self.partners:
