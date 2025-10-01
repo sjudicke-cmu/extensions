@@ -150,7 +150,7 @@ These cases are flagged for human approval:
 - The **student record** has "work-in-progress" (e.g. the row on the roster is red or yellow - the student either has an existing pending request or ongoing student meeting).
 - The student requests an extension after 11:59 PM on the assignment due date listed on **Spreadsheet/Assignments**.
 
-All other cases are auto-approved! [See here for the logic that handles these cases.](https://github.com/cs161-staff/extensions/blob/master/src/handle_form_submit.py#L63)
+All other cases are auto-approved! [See here for the logic that handles these cases.](https://github.com/cs161-staff/extensions/blob/master/src/policy.py#L45)
 
 **<u>How do I make it so that all extensions (regardless of status) require manual approval?</u>**
 
