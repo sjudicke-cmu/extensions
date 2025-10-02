@@ -1,10 +1,11 @@
 from src.assignments import AssignmentList
-from src.environment import Environment
 from src.errors import ConfigurationError
 from src.gradescope import Gradescope
+from src.pensieve import Pensieve
 from src.record import StudentRecord
 from src.sheets import SHEET_ASSIGNMENTS, SHEET_ENVIRONMENT_VARIABLES, SHEET_STUDENT_RECORDS, BaseSpreadsheet
 from src.slack import SlackManager
+from src.environment import Environment
 
 
 def handle_flush_gradescope(request_json):
@@ -28,36 +29,73 @@ def handle_flush_gradescope(request_json):
 
     slack = SlackManager()
 
-    gradescope = Gradescope()
+    # Gradescope
+    if Gradescope.is_enabled():
+        gradescope = Gradescope()
 
-    all_warnings = []
-    successes = []
-    failures = []
-    for i, table_record in enumerate(records):
-        student = StudentRecord(table_index=i, table_record=table_record, sheet=sheet_records)
-        if student.should_flush_gradescope():
-            warnings = student.apply_extensions(assignments=assignments, gradescope=gradescope)
-            if len(warnings) > 0:
-                failures.append(student.get_email())
-                all_warnings.extend(warnings)
-            else:
-                successes.append(student.get_email())
-                student.set_flush_gradescope_status_success()
+        all_warnings = []
+        successes = []
+        failures = []
+        for i, table_record in enumerate(records):
+            student = StudentRecord(table_index=i, table_record=table_record, sheet=sheet_records)
+            if student.should_flush_gradescope():
+                warnings = student.apply_extensions(assignments=assignments, gradescope=gradescope)
+                if len(warnings) > 0:
+                    failures.append(student.get_email())
+                    all_warnings.extend(warnings)
+                else:
+                    successes.append(student.get_email())
+                    student.set_flush_gradescope_status_success()
 
-        student.flush()
+            student.flush()
 
-    for warning in all_warnings:
-        slack.add_warning(warning)
+        for warning in all_warnings:
+            slack.add_warning(warning)
 
-    summary = "Flush Gradescope Summary:" + "\n"
-    if len(successes) > 0:
-        summary += "\n" + "*Successes:* " + ", ".join(successes)
-    if len(failures) > 0:
-        summary += "\n" + "*Failures:* " + ", ".join(failures)
-    if len(successes) + len(failures) == 0:
-        summary += (
-            "\n"
-            + "No student records processed. To process a student record, create a `flush_gradescope` column on the Roster sheet, and set the value to TRUE for each record you would like to flush to Gradescope."
-        )
+        summary = "Flush Gradescope Summary:" + "\n"
+        if len(successes) > 0:
+            summary += "\n" + "*Successes:* " + ", ".join(successes)
+        if len(failures) > 0:
+            summary += "\n" + "*Failures:* " + ", ".join(failures)
+        if len(successes) + len(failures) == 0:
+            summary += (
+                "\n"
+                + "No student records processed. To process a student record, create a `flush_gradescope` column on the Roster sheet, and set the value to TRUE for each record you would like to flush to Gradescope."
+            )
 
-    slack.send_message(summary)
+        slack.send_message(summary)
+
+    if Pensieve.is_enabled():
+        pensieve = Pensieve()
+
+        all_warnings = []
+        successes = []
+        failures = []
+        for i, table_record in enumerate(records):
+            student = StudentRecord(table_index=i, table_record=table_record, sheet=sheet_records)
+            if student.should_flush_pensieve():
+                w = student.apply_extensions_pensieve(assignments=assignments, pensieve=pensieve)
+                if len(w) > 0:
+                    failures.append(student.get_email())
+                    all_warnings.extend(w)
+                else:
+                    successes.append(student.get_email())
+                    student.set_flush_pensieve_status_success()
+
+            student.flush()
+
+        for warning in all_warnings:
+            slack.add_warning(warning)
+
+        summary = "Flush Pensieve Summary:" + "\n"
+        if len(successes) > 0:
+            summary += "\n" + "*Successes:* " + ", ".join(successes)
+        if len(failures) > 0:
+            summary += "\n" + "*Failures:* " + ", ".join(failures)
+        if len(successes) + len(failures) == 0:
+            summary += (
+                "\n"
+                + "No student records processed. To process a student record, create a `flush_pensieve` column on the Roster sheet, and set the value to TRUE for each record you would like to flush to Pensieve."
+            )
+
+        slack.send_message(summary)
