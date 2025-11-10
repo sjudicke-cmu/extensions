@@ -28,7 +28,7 @@ At a high level, this pipeline consists of:
  
 This fork of the CS 161 extensions pipeline is managed by Seamless Learning and UC Berkeley CDSS staff. There are slight differences between CS 161's version and this version, including which Google Cloud Functions are used.
 
-This README is useful to see how the pipeline works for students and staff. See [GETTING_STARTED.md](GETTING_STARTED.md) to set up the pipeline for your class.
+This README is useful to see how the pipeline works for students and staff. See [GETTING_STARTED](https://github.com/berkeley-cdss/extensions/wiki/GETTING-STARTED) to set up the pipeline for your class.
 
 # Background
 
@@ -150,7 +150,7 @@ These cases are flagged for human approval:
 - The **student record** has "work-in-progress" (e.g. the row on the roster is red or yellow - the student either has an existing pending request or ongoing student meeting).
 - The student requests an extension after 11:59 PM on the assignment due date listed on **Spreadsheet/Assignments**.
 
-All other cases are auto-approved! [See here for the logic that handles these cases.](https://github.com/cs161-staff/extensions/blob/master/src/policy.py#L45)
+All other cases are auto-approved! [See here for the logic that handles these cases.](src/policy.py)
 
 **<u>How do I make it so that all extensions (regardless of status) require manual approval?</u>**
 
