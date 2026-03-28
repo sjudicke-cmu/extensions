@@ -42,13 +42,6 @@ class FormSubmission:
     def get_email(self) -> str:
         return str(self.responses["email"]).lower()
 
-    def dsp_status(self) -> str:
-        return self.responses["is_dsp"]
-
-    def claims_dsp(self) -> bool:
-        # If their response is "Yes" or some other text, we auto-approve the request for DSP purposes.
-        return self.responses["is_dsp"] != "No"
-
     def knows_assignments(self) -> bool:
         # Encoding default behavior: if form doesn't contain knows_assignments field, then we assume
         # that the student definitely knows their assignments.
@@ -107,18 +100,6 @@ class FormSubmission:
 
     def get_documentation(self) -> str:
         return self.responses["documentation"]
-
-    def has_partner(self) -> bool:
-        # Encoding default behavior: if the form doesn't contain a has_partner field, then we assume
-        # the student is working alone (e.g. the class has all solo assignments).
-        if "has_partner" not in self.responses:
-            return False
-
-        return self.responses["has_partner"] == "Yes"
-
-    def get_partner_emails(self) -> List[str]:
-        assert self.has_partner()
-        return [row.lower() for row in cast_list_str(str(self.responses["partner_email"]))]
 
     def get_game_plan(self) -> str:
         assert not self.knows_assignments()
