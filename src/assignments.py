@@ -8,7 +8,7 @@ from src.errors import ConfigurationError
 from src.sheets import Sheet
 from src.utils import cast_bool, cast_date, cast_list_str
 
-PST = timezone("US/Pacific")
+EST = timezone("US/Eastern")
 
 
 class Assignment:
@@ -22,7 +22,6 @@ class Assignment:
         id: str,
         due_date: Optional[datetime],
         hard_due_date: Optional[datetime],
-        partner: bool,
         gradescope: List[str],
         pensieve: List[str],
     ) -> None:
@@ -30,7 +29,6 @@ class Assignment:
         self.id = id
         self.due_date = due_date
         self.hard_due_date = hard_due_date
-        self.partner = partner
         self.gradescope = gradescope
         self.pensieve = pensieve
 
@@ -45,7 +43,7 @@ class Assignment:
 
         request_time: datetime = parser.parse(request_time)
         if request_time.tzinfo is None:
-            request_time = PST.localize(request_time)
+            request_time = EST.localize(request_time)
         if request_time > self.due_date:
             return True
         else:
@@ -62,9 +60,6 @@ class Assignment:
 
     def get_hard_due_date(self) -> Optional[datetime]:
         return self.hard_due_date
-
-    def is_partner_assignment(self):
-        return self.partner
 
     def get_gradescope_assignment_urls(self) -> List[str]:
         return self.gradescope
@@ -89,7 +84,6 @@ class AssignmentList:
                         id=row["id"],
                         due_date=cast_date(row.get("due_date", ""), optional=True),
                         hard_due_date=cast_date(row.get("hard_due_date", ""), optional=True),
-                        partner=cast_bool(row["partner"]),
                         gradescope=cast_list_str(row.get("gradescope", "")),
                         pensieve=cast_list_str(row.get("pensieve", "")),
                     )
