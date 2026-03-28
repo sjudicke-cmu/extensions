@@ -31,14 +31,8 @@ class Policy:
         self.slack = slack
 
     def fetch_student_records(self, sheet_records: Sheet):
-        # Validate/extract student (and partner, if applicable) records
+        # Validate/extract student records
         self.student = StudentRecord.from_email(email=self.submission.get_email(), sheet_records=sheet_records)
-        self.partners: List[StudentRecord] = []
-        if self.submission.has_partner():
-            self.partners = [
-                StudentRecord.from_email(email=email, sheet_records=sheet_records)
-                for email in self.submission.get_partner_emails()
-            ]
 
         # Set up a connection to Slack, so we can stream output there
         self.slack.set_current_student(submission=self.submission, student=self.student, assignments=self.assignments)
@@ -53,10 +47,6 @@ class Policy:
 
         self.student.set_last_run_timestamp(timestamp=self.submission.get_timestamp())
         self.student.set_last_run_reason(reason=reason)
-        if self.partners:
-            for partner in self.partners:
-                partner.set_last_run_timestamp(timestamp=self.submission.get_timestamp())
-                partner.set_last_run_reason(reason=reason + f" [source: {self.submission.get_email()}]")
 
         # Step 1: If this is a request for a student support meeting, exit early.
         if not self.submission.knows_assignments():
@@ -90,16 +80,10 @@ class Policy:
         # Step 6: Send the email.
         if not silent:
             self.send_email(target=self.student)
-            if self.partners:
-                for partner in self.partners:
-                    self.send_email(target=partner)
 
         # Step 7: If enabled, extend deadlines on Gradescope.
         if not silent:
             self.extend_assignments(target=self.student)
-            if self.partners:
-                for partner in self.partners:
-                    self.extend_assignments(target=partner)
 
         self.slack.send_student_update(message=message, autoapprove=True)
 
@@ -107,49 +91,6 @@ class Policy:
 
     def check_work_in_progress(self) -> Optional[str]:
         work_in_progress = None
-
-        # Case (1): Submission contains partner, and student's status is a "work-in-progress".
-        # We can't auto-approve here for either party (we're blocked on the student).
-        if self.submission.has_partner() and self.student.has_wip_status():
-            self.student.flush()
-            for partner in self.partners:
-                partner.set_status_pending()
-                partner.set_log(f"Work-in-progress for form submitter [submitter: {self.student.get_email()}].")
-                partner.flush()
-            work_in_progress = (
-                "An extension request needs review (there is work-in-progress for this student's record)."
-            )
-
-        # Case (2): Submission contains partner(s), and at least one partner's status is a "work-in-progress"
-        # We can't auto-approve here for anyone (we're blocked on one or more partners).
-        elif self.submission.has_partner() and any([partner.has_wip_status() for partner in self.partners]):
-
-            # Dirty partners are partners with work-in-progress rows (e.g. we want to leave them as is).
-            dirty_partners = [partner for partner in self.partners if partner.has_wip_status()]
-            for partner in dirty_partners:
-                partner.flush()
-
-            # Construct a log message that describes what happened in this case.
-            wip_emails = ", ".join([p.get_email() for p in dirty_partners])
-            msg = (
-                f"Work-in-progress for submitter's partner [submitter: {self.submission.get_email()}] "
-                + f"[partner(s) with WIP: {wip_emails}]."
-            )
-
-            # Clean partners are partners with "clean" rows (e.g. we want to flip them to yellow).
-            clean_partners = [partner for partner in self.partners if not partner.has_wip_status()]
-            for partner in clean_partners:
-                partner.set_status_pending()
-                partner.set_log(msg)
-                partner.flush()
-
-            # We want to flip the student's row to yellow.
-            self.student.set_status_pending()
-            self.student.set_log(msg)
-            self.student.flush()
-            work_in_progress = (
-                "An extension request needs review (there is work-in-progress for this student's partner)."
-            )
 
         # Case (3): Submission doesn't contain partner, and student's status is a "work-in-progress"
         # Here, we don't want to touch the student's status (e.g. if it's "Meeting Requested", we want to leave
@@ -226,25 +167,11 @@ class Policy:
             # roster sheet. Note that this write isn't pushed until we call flush().
             self.student.queue_write_back(col_key=assignment.get_id(), col_value=num_days)
 
-            # We do the same for the partner, if this assignment has a partner and the submission has a partner.
-            if assignment.is_partner_assignment() and self.partners:
-                for partner in self.partners:
-                    partner.queue_write_back(col_key=assignment.get_id(), col_value=num_days)
-
         # If this request needs a human, we update statuses to "pending" and proceed.
         if needs_human:
             self.student.set_status_pending()
-            self.student.set_log(
-                f"{needs_human.capitalize()} [submitter: {self.student.get_email()}]"
-                if self.partners
-                else needs_human.capitalize()
-            )
+            self.student.set_log(f"{needs_human.capitalize()}")
             self.student.flush()
-            if self.partners:
-                for partner in self.partners:
-                    partner.set_status_pending()
-                    partner.set_log(f"{needs_human.capitalize()} [submitter: {self.student.get_email()}]")
-                    partner.flush()
 
         return needs_human
 
@@ -261,14 +188,7 @@ class Policy:
         self.student.set_log("Auto-approved.")
         self.student.flush()
 
-        if not self.partners:
-            message = "An extension request was automatically approved!"
-        else:
-            for partner in self.partners:
-                partner.set_status_approved()
-                partner.set_log(f"Auto-approved [request source: {self.student.get_email()}].")
-                partner.flush()
-            message = "An extension request was automatically approved (for the submitter's partner(s), too!)"
+        message = "An extension request was automatically approved!"
 
         return message
 
