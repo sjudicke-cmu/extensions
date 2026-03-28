@@ -44,10 +44,6 @@ class SlackManager:
         text = "> *Email*: " + self.submission.get_email() + "\n"
         text += "> *Assignment(s)*: " + self.submission.get_raw_requests() + "\n"
         text += "> *Reason*: " + self.submission.get_reason().replace("\n", " ") + "\n"
-        if self.submission.claims_dsp():
-            text += "> *DSP Accomodations for Extensions*: " + self.submission.dsp_status() + "\n"
-        if self.submission.has_partner():
-            text += "> *Partner Email(s)*: " + ", ".join(self.submission.get_partner_emails()) + "\n"
         text += "> *Documentation*: " + self.submission.get_documentation() + "\n"
         return text
 
