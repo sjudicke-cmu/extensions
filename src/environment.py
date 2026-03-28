@@ -7,17 +7,17 @@ from src.sheets import Sheet
 
 PREFIX = "flextensions_"
 
-DEFAULT_COURSE_NAME = "PLEASE SET A COURSE NAME"
-DEFAULT_REPLY_TO_EMAIL = "PLEASE SET REPLY-TO EMAIL"
+DEFAULT_COURSE_NAME = "15-213/513"
+DEFAULT_REPLY_TO_EMAIL = "sjudicke@andrew.cmu.edu"
 
-DEFAULT_AUTO_APPROVE_THRESHOLD = 1
-DEFAULT_AUTO_APPROVE_THRESHOLD_DSP = 1
+DEFAULT_AUTO_APPROVE_THRESHOLD = 3
+# DEFAULT_AUTO_APPROVE_THRESHOLD_DSP = 1
 DEFAULT_APPROVE_ASSIGNMENT_THRESHOLD = 1
-DEFAULT_MAX_TOTAL_REQUESTED_EXTENSIONS_THRESHOLD = 3
+DEFAULT_MAX_TOTAL_REQUESTED_EXTENSIONS_THRESHOLD = 1
 
-DEFAULT_EMAIL_FROM = "[{}] <{}@berkeley.edu>".format(DEFAULT_COURSE_NAME, DEFAULT_COURSE_NAME)
-DEFAULT_EMAIL_SUBJECT = "[CS 000] Extension Request Update"
-DEFAULT_EMAIL_SIGNATURE = "{} Staff".format(DEFAULT_COURSE_NAME)
+DEFAULT_EMAIL_FROM = "[{}] <sjudicke@andrew.cmu.edu>".format(DEFAULT_COURSE_NAME)
+DEFAULT_EMAIL_SUBJECT = "[15-213/513] Extension Request Update"
+DEFAULT_EMAIL_SIGNATURE = "{} Course Staff".format(DEFAULT_COURSE_NAME)
 
 DEFAULT_EXTEND_GRADESCOPE_ASSIGNMENTS = "No"
 DEFAULT_EXTEND_PENSIEVE_ASSIGNMENTS = "No"
@@ -51,10 +51,6 @@ class Environment:
     @staticmethod
     def get_auto_approve_threshold() -> int:
         return int(Environment._safe_get("AUTO_APPROVE_THRESHOLD", DEFAULT_AUTO_APPROVE_THRESHOLD))
-
-    @staticmethod
-    def get_auto_approve_threshold_dsp() -> int:
-        return int(Environment._safe_get("AUTO_APPROVE_THRESHOLD_DSP", DEFAULT_AUTO_APPROVE_THRESHOLD_DSP))
 
     @staticmethod
     def get_max_total_requested_extensions_threshold() -> int:
