@@ -9,7 +9,7 @@ from pytz import timezone
 from src.errors import ConfigurationError, KnownError
 from src.sheets import Sheet
 
-PST = timezone("US/Pacific")
+EST = timezone("US/Eastern")
 
 
 def cast_bool(cell: str) -> bool:
@@ -30,7 +30,7 @@ def cast_date(cell: str, deadline: bool = True, optional: bool = False) -> Optio
             return None
         cell = str(cell).strip()
         suffix = " 11:59 PM" if deadline else ""
-        return PST.localize(parser.parse(str(cell) + suffix))
+        return EST.localize(parser.parse(str(cell) + suffix))
     except Exception as err:
         raise KnownError(f"Could not convert cell to date format. Value = {cell}, Error = {err}.")
 
