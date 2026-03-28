@@ -22,7 +22,7 @@ EMAIL_STATUS_PENDING = "Pending Approval"
 EMAIL_STATUS_IN_QUEUE = "In Queue"
 EMAIL_STATUS_AUTO_SENT = "Auto Sent"
 
-PST = timezone("US/Pacific")
+EST = timezone("US/Eastern")
 
 
 class StudentRecord:
@@ -45,12 +45,6 @@ class StudentRecord:
 
     def get_email(self):
         return self.table_record["email"].lower()
-
-    def roster_contains_dsp_status(self):
-        return "is_dsp" in self.table_record
-
-    def is_dsp(self):
-        return self.table_record["is_dsp"] == "Yes"
 
     def get_email_comments(self) -> None:
         return self.table_record["email_comments"]
@@ -138,7 +132,7 @@ class StudentRecord:
         if "last_run_timestamp" in self.sheet.get_headers():
             timestamp: datetime = parse(timestamp)
             if not timestamp.tzinfo:
-                timestamp = PST.localize(timestamp)
+                timestamp = EST.localize(timestamp)
             self.queue_write_back(
                 col_key="last_run_timestamp", col_value=str(timestamp.strftime("%-m/%-d/%Y %H:%M:%S"))
             )
